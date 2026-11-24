@@ -11,10 +11,6 @@ capture queue ─► VideoEncoder (VideoToolbox) ─► [lock] TSMuxer ─► SR
 audio queue   ─► AudioEncoder (AAC)          ─┘
 ```
 
-PineVideoKit was written from scratch for [PineSRT](https://git.digipine.com/simon/PineSRT)
-(iPhone camera → Mac over SRT), using [HaishinKit](https://github.com/HaishinKit/HaishinKit.swift)
-as a reference for the feature set. No HaishinKit code is included.
-
 ## Features
 
 | Area | Details |
