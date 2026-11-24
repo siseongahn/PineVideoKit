@@ -27,12 +27,44 @@ public final class PVPreviewView: UIView {
         set { previewLayer.videoGravity = newValue }
     }
 
+    private var rotationAngle: CGFloat = 0
+    // Only touched on the main actor and in deinit (after the last main-actor use).
+    nonisolated(unsafe) private var runningObserver: (any NSObjectProtocol)?
+
+    deinit {
+        if let runningObserver { NotificationCenter.default.removeObserver(runningObserver) }
+    }
+
     /// Shows `source`'s session, rotated by `rotationAngle` degrees (match the capture configuration).
+    ///
+    /// The preview layer only gets a connection once the session has a camera input, which is
+    /// usually after the view is created. Otherwise the layer keeps iOS's default (portrait, 90°)
+    /// and a landscape UI shows a sideways picture. So the angle is re-applied whenever the
+    /// session starts running and on every layout pass.
     public func attach(_ source: PVCaptureSource, rotationAngle: CGFloat = 0) {
-        previewLayer.session = source.session
-        if let connection = previewLayer.connection, connection.isVideoRotationAngleSupported(rotationAngle) {
-            connection.videoRotationAngle = rotationAngle
+        self.rotationAngle = rotationAngle
+        if previewLayer.session !== source.session {
+            previewLayer.session = source.session
+            if let runningObserver { NotificationCenter.default.removeObserver(runningObserver) }
+            runningObserver = NotificationCenter.default.addObserver(
+                forName: AVCaptureSession.didStartRunningNotification, object: source.session, queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated { self?.applyRotation() }
+            }
         }
+        applyRotation()
+    }
+
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        applyRotation()
+    }
+
+    private func applyRotation() {
+        guard let connection = previewLayer.connection,
+              connection.videoRotationAngle != rotationAngle,
+              connection.isVideoRotationAngleSupported(rotationAngle) else { return }
+        connection.videoRotationAngle = rotationAngle
     }
 }
 
