@@ -136,6 +136,15 @@ swift build
 | `Sources/PineVideoKit/View/` | iOS preview views |
 | `Sources/pvk-selftest/` | macOS test-pattern sender |
 
+## Changes
+
+- **`ae14cc9` — preview rotation fix.** `AVCaptureVideoPreviewLayer` gets its connection only after the session
+  has a camera input, usually after the view is created, so the rotation passed to `attach` was lost and the
+  preview kept iOS's portrait default (90°) — sideways in a landscape UI. `PVPreviewView` now keeps the angle
+  and re-applies it when the session starts running and on every layout pass. Encoded video was not affected.
+- **`82e63e0` — initial release.** Capture, VideoToolbox H.264/HEVC with encoder warm-up, AAC, MPEG-TS muxer,
+  libsrt transport, iOS preview, `pvk-selftest`, unit tests.
+
 ## License
 
 PineVideoKit is released under the MIT License — see [LICENSE](LICENSE).
